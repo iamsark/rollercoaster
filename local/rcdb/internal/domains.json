@@ -1,0 +1,70 @@
+[
+  {
+    "sarkware.com": {
+      "receiver": {
+        "host": "md-in-31.webhostbox.net",
+        "port": "993",
+        "type": "imap",
+        "security": "ssl",
+        "validate": "no"
+      },
+      "sender": {
+        "host": "md-in-31.webhostbox.net",
+        "port": "587",
+        "security": "notls",
+        "authenticate": "no"
+      }
+    }
+  },
+  {
+    "gmail.com": {
+      "receiver": {
+        "host": "imap.gmail.com",
+        "port": "993",
+        "type": "imap",
+        "security": "ssl",
+        "validate": "yes"
+      },
+      "sender": {
+        "host": "smtp.gmail.com",
+        "port": "465",
+        "security": "tls",
+        "authenticate": "no"
+      }
+    }
+  },
+  {
+    "ymail.com": {
+      "receiver": {
+        "host": "imap.mail.yahoo.com",
+        "port": "993",
+        "type": "imap",
+        "security": "ssl",
+        "validate": "yes"
+      },
+      "sender": {
+        "host": "imap.mail.yahoo.com",
+        "port": "465",
+        "security": "tls",
+        "authenticate": "no"
+      }
+    }
+  },
+  {
+    "msconsortium.co.in": {
+      "receiver": {
+        "host": "pop.net4india.com",
+        "port": "110",
+        "type": "pop3",
+        "security": "notls",
+        "validate": "no"
+      },
+      "sender": {
+        "host": "smtpauth.net4india.com",
+        "port": "587",
+        "security": "notls",
+        "authenticate": "no"
+      }
+    }
+  }
+]

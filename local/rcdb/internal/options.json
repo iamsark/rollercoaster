@@ -1,0 +1,52 @@
+{
+	"admin": {
+		"user":"sark@sarkware.com",
+		"pass":"123456"	
+	},
+	"modules": [ 
+		{ 
+			"name": "email",
+		 	"title": "Email",
+		 	"status": "yes",
+		 	"desc": "",
+		 	"dependencies": [],
+			"options": {
+				"refresh_interval":"5",
+				"memory_size":"512",
+				"message_per_page":"50",
+				"enable_cache":"no"			
+			} 
+		},
+		{
+			"name": "contact",
+		 	"title": "Contact",
+		 	"status": "yes",
+		 	"desc": "",
+		 	"dependencies": [],
+		 	"options": {}
+		},
+		{
+			"name": "calendar",
+		 	"title": "Calendar",
+		 	"status": "yes",
+		 	"desc": "",
+		 	"dependencies": [],
+		 	"options": {}
+		}
+	],
+	"theme": {
+		"name": "Dark Knight",
+		"directory": "dark-knight",
+		"desc": "",
+		"dependencies": []
+	},
+	"info": {
+		"package": "rc",
+		"name": "Roller Coaster",
+		"version": "1.0.0",
+		"author": "Saravana Kumar K",
+		"copyright": "Sarkware Pvt Ltd",
+		"url": "https://sarkware.com",
+		"author_url": "http://iamsark.com"
+	}
+}
