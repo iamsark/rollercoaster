@@ -82,6 +82,7 @@ var rcLister = function( _rc ) {
 	this.handleMoveMessageResponse = function( _req, _res ) {
 		if( _res.status ) {
 			var uid = _req.payload.uids;
+			var cIndex = -1;
 			var sourceFolder = _req.payload.folder;
 			var targetFolder = _req.payload.to;
 			var header = this.getHeader( sourceFolder, uid );
@@ -97,6 +98,15 @@ var rcLister = function( _rc ) {
 			this.controller.folder.binders[ sourceFolder ].syncMeta();
 			/* Reload target folder meta */
 			this.controller.folder.binders[ targetFolder ].syncMeta();
+			/* Sanity check for Checked Headers
+			 * If the moved message was in checked state before being moved
+			 * We need to remove that uid from 'checkedHeaders' property as well */
+			for(var i = 0; i < this.binders[ sourceFolder ].checkedHeaders.length; i++  ) {
+				if( this.binders[ sourceFolder ].checkedHeaders[i] == uid ) {
+					this.binders[ sourceFolder ].checkedHeaders.splice( i, 1 );
+					break;
+				}
+			}			
 			/* Check the viewer and if the message is opened for viewing then
 			 * update all the folder reference their */
 			if( this.controller.viewer.binders[ uid ] ) {
@@ -167,7 +177,7 @@ var rcLister = function( _rc ) {
 		rcControllerObj.notify.show( "Updating...", "info", true );
 	};
 	
-	this.handleUpdateResponse = function( _req, _res ) {
+	this.handleUpdateFlagResponse = function( _req, _res ) {
 		if( _res.status ) {
 			var uid = _req.payload.uids;
 			var value = _req.payload.value;
@@ -210,13 +220,10 @@ var rcLister = function( _rc ) {
 			this.prepareBulkMove();
 		} else if( action == "delete" ) {
 			this.prepareBulkDelete();
-		} else if( action == "mark-read" || action == "mark-unread" ) {
-			this.prepareBulkMarkAsRead();
-		} else if( action == "mark-flag" || action == "mark-unflag" ) {
-			
+		} else if( action == "mark-read" || action == "mark-unread" || action == "mark-flag" || action == "mark-unflag" ) {
+			this.updateFlags();
 		} else {
-			// of course this must be 'mark-unread'
-			this.prepareBulkMarkAsUnRead();
+			/* Unlikely */
 		}
 	};
 	
@@ -270,7 +277,7 @@ var rcLister = function( _rc ) {
 			return;
 		}
 		/* Close the folder select dialog */
-		this.controller.dialog.closeDialog();		
+		this.controller.dialog.closeDialog();	
 		/* Now send the command to server */
 		this.controller.request = this.controller.prepareRequest( "PUT", "email", "lister", "bulk_move", { folder: _folder, to: targetFolder, uids: this.binders[ _folder ].checkedHeaders.join(",") } );
 		this.controller.dock( this );
@@ -389,6 +396,22 @@ var rcLister = function( _rc ) {
 		}
 	};
 	
+	this.updateFlags = function( _action ) {		
+		var _flag = "";
+		var _value = true;		
+		if( _action == "mark-read" || _action == "mark-unread" ) {
+			_flag = "SEEN";
+		} else if( _action == "mark-flag" || _action == "mark-unflag" ) {			
+			_flag = "FLAGGED";
+		}		
+		if( _action == "mark-unread" || _action == "mark-unflag" ) {
+			_value = false;
+		}
+		rcControllerObj.request = rcControllerObj.prepareRequest( "PUT", "email", "lister", "update", { folder: this.controller.folder.current, uids: _uid, flag: _flag, value: _value } );
+		rcControllerObj.dock();
+		rcControllerObj.notify.show( "Updating...", "info", true );
+	};
+	
 	/* Called from confirm box */
 	this.onUserConfirmed = function( _task, _action ) {
 		if( _task == "delete" && _action == "yes" ) {
@@ -415,13 +438,13 @@ var rcLister = function( _rc ) {
 			} else if( _req.task == "move" ) {
 				this.handleMoveResponse( _req, _res );
 			} else if( _req.task == "update" ) {
-				this.handleUpdateResponse( _req, _res );
+				this.handleUpdateFlagResponse( _req, _res );
 			} else if( _req.task == "bulk_delete" ) {
 				this.handleBulkDeleteResponse( _req, _res );
 			} else if( _req.task == "bulk_move" ) {
 				this.handleBulkMoveResponse( _req, _res );
 			} else if( _req.task == "bulk_update" ) {
-				this.handleBulkUpdateResponse( _req, _res );
+				this.handleBulkUpdateFlagResponse( _req, _res );
 			} else {
 				// Unlikely
 			}
