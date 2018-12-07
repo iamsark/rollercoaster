@@ -1705,20 +1705,20 @@ class RC_ImapSocket {
         return $result;
     }
     
-    public function fetch($mailbox, $message_set, $is_uid = false, $query_items = array(), $mod_seq = null, $vanished = false) {
-        if (!$this->select($mailbox)) {
+    public function fetch($_mailbox, $_message_set, $_is_uid = false, $_query_items = array(), $_mod_seq = null, $_vanished = false) {
+        if (!$this->select($_mailbox)) {
             return false;
         }
         
-        $message_set = $this->compressMessageSet($message_set);
+        $_message_set = $this->compressMessageSet($_message_set);
         $result      = array();
         
         $key      = $this->nextTag();
-        $cmd      = ($is_uid ? 'UID ' : '') . 'FETCH';
-        $request  = "$key $cmd $message_set (" . implode(' ', $query_items) . ")";
+        $cmd      = ($_is_uid ? 'UID ' : '') . 'FETCH';
+        $request  = "$key $cmd $_message_set (" . implode(' ', $_query_items) . ")";
         
-        if ($mod_seq !== null && $this->hasCapability('CONDSTORE')) {
-            $request .= " (CHANGEDSINCE $mod_seq" . ($vanished ? " VANISHED" : '') .")";
+        if ($_mod_seq !== null && $this->hasCapability('CONDSTORE')) {
+            $request .= " (CHANGEDSINCE $_mod_seq" . ($_vanished ? " VANISHED" : '') .")";
         }
         
         if (!$this->putLine($request)) {
@@ -1741,7 +1741,7 @@ class RC_ImapSocket {
             if (preg_match('/^\* ([0-9]+) FETCH/', $line, $m)) {
                 $id = intval($m[1]);
                 
-                $result[$id]            = new rcube_message_header;
+                $result[$id]            = new RC_MessageHeader();
                 $result[$id]->id        = $id;
                 $result[$id]->subject   = '';
                 $result[$id]->messageID = 'mid:' . $id;
@@ -1914,6 +1914,95 @@ class RC_ImapSocket {
             }
         }
         while (!$this->startsWith($line, $key, true));
+        
+        return $result;
+    }
+    
+    public function fetchHeaders($_mailbox, $_message_set, $_is_uid = false, $_bodystr = false, $_add_headers = array()) {
+        $query_items = array('UID', 'RFC822.SIZE', 'FLAGS', 'INTERNALDATE');
+        $headers     = array('DATE', 'FROM', 'TO', 'SUBJECT', 'CONTENT-TYPE', 'CC', 'REPLY-TO',
+            'LIST-POST', 'DISPOSITION-NOTIFICATION-TO', 'X-PRIORITY');
+        
+        if (!empty($_add_headers)) {
+            $_add_headers = array_map('strtoupper', $_add_headers);
+            $headers     = array_unique(array_merge($headers, $_add_headers));
+        }
+        
+        if ($_bodystr) {
+            $query_items[] = 'BODYSTRUCTURE';
+        }
+        
+        $query_items[] = 'BODY.PEEK[HEADER.FIELDS (' . implode(' ', $headers) . ')]';
+        
+        return $this->fetch($_mailbox, $_message_set, $_is_uid, $query_items);
+    }
+    
+    public function fetchHeader($_mailbox, $_id, $_is_uid = false, $_bodystr = false, $_add_headers = array()) {
+        $a = $this->fetchHeaders($_mailbox, $_id, $_is_uid, $_bodystr, $_add_headers);
+        if (is_array($a)) {
+            return array_shift($a);
+        }
+        
+        return false;
+    }
+    
+    public static function sortHeaders($_messages, $_field, $_flag) {
+        // Strategy: First, we'll create an "index" array.
+        // Then, we'll use sort() on that array, and use that to sort the main array.
+        
+        $_field  = empty($_field) ? 'uid' : strtolower($_field);
+        $_flag   = empty($_flag) ? 'ASC' : strtoupper($_flag);
+        $index  = array();
+        $result = array();
+        
+        reset($_messages);
+        
+        foreach ($_messages as $key => $headers) {
+            $value = null;
+            
+            switch ($_field) {
+                case 'arrival':
+                    $_field = 'internaldate';
+                case 'date':
+                case 'internaldate':
+                case 'timestamp':
+                    $value = RC_Helper::strtotime($headers->$_field);
+                    if (!$value && $_field != 'timestamp') {
+                        $value = $headers->timestamp;
+                    }
+                    
+                    break;
+                    
+                default:
+                    // @TODO: decode header value, convert to UTF-8
+                    $value = $headers->$_field;
+                    if (is_string($value)) {
+                        $value = str_replace('"', '', $value);
+                        if ($_field == 'subject') {
+                            $value = preg_replace('/^(Re:\s*|Fwd:\s*|Fw:\s*)+/i', '', $value);
+                        }
+                        
+                        $data = strtoupper($value);
+                    }
+            }
+            
+            $index[$key] = $value;
+        }
+        
+        if (!empty($index)) {
+            // sort index
+            if ($_flag == 'ASC') {
+                asort($index);
+            }
+            else {
+                arsort($index);
+            }
+            
+            // form new array based on index
+            foreach ($index as $key => $val) {
+                $result[$key] = $_messages[$key];
+            }
+        }
         
         return $result;
     }
