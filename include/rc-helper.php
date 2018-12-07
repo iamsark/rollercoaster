@@ -131,7 +131,7 @@ if (!class_exists("RC_Helper")) {
 			/* Remove DOCTYPE tag */
 			$safe_html = preg_replace('/^<!DOCTYPE.+?>/', '', $safe_html);
 			/* Replpace body css selector with '.rc-mail-body' class */
-			$safe_html = str_ireplace("body", ".rc-mail-body", $safe_html);
+			//$safe_html = str_ireplace("body", ".rc-mail-body", $safe_html);
 		
 			return $safe_html;
 		}
@@ -149,7 +149,7 @@ if (!class_exists("RC_Helper")) {
 			$_msg = preg_replace('/[\x00-\x1F\x7F\xA0]/u', '', $_msg);
 			$doc = new DOMDocument();
 			$doc->encoding = 'UTF-8';
-			$doc->loadHTML('<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head><body>'.$_msg.'</body></html>');
+			$doc->loadHTML('<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head><body class="rc-message-body">'.$_msg.'</body></html>');
 			return $doc->saveHTML();
 		}
 		
@@ -375,6 +375,105 @@ if (!class_exists("RC_Helper")) {
 			}
 		
 			return;
+		}
+		
+		public static function strtotime($_date, $_timezone = null) {
+		    $_date   = self::clean_datestr($_date);
+		    $tzname = $_timezone ? ' ' . $_timezone->getName() : '';
+		    
+		    // unix timestamp
+		    if (is_numeric($_date)) {
+		        return (int) $_date;
+		    }
+		    
+		    // It can be very slow when provided string is not a date and very long
+		    if (strlen($_date) > 128) {
+		        $_date = substr($_date, 0, 128);
+		    }
+		    
+		    // if date parsing fails, we have a date in non-rfc format.
+		    // remove token from the end and try again
+		    while (($ts = @strtotime($_date . $tzname)) === false || $ts < 0) {
+		        if (($pos = strrpos($_date, ' ')) === false) {
+		            break;
+		        }
+		        
+		        $_date = rtrim(substr($_date, 0, $pos));
+		    }
+		    
+		    return (int) $ts;
+		}
+		
+		public static function compressMessageSet($_messages, $_force=false) {
+		    // given a comma delimited list of independent mid's,
+		    // compresses by grouping sequences together
+		    if (!is_array($_messages)) {
+		        // if less than 255 bytes long, let's not bother
+		        if (!$_force && strlen($_messages) < 255) {
+		            return preg_match('/[^0-9:,*]/', $_messages) ? 'INVALID' : $_messages;
+		        }
+		        
+		        // see if it's already been compressed
+		        if (strpos($_messages, ':') !== false) {
+		            return preg_match('/[^0-9:,*]/', $_messages) ? 'INVALID' : $_messages;
+		        }
+		        
+		        // separate, then sort
+		        $_messages = explode(',', $_messages);
+		    }
+		    
+		    sort($_messages);
+		    
+		    $result = array();
+		    $start  = $prev = $_messages[0];
+		    
+		    foreach ($_messages as $id) {
+		        $incr = $id - $prev;
+		        if ($incr > 1) { // found a gap
+		            if ($start == $prev) {
+		                $result[] = $prev; // push single id
+		            }
+		            else {
+		                $result[] = $start . ':' . $prev; // push sequence as start_id:end_id
+		            }
+		            $start = $id; // start of new sequence
+		        }
+		        $prev = $id;
+		    }
+		    
+		    // handle the last sequence/id
+		    if ($start == $prev) {
+		        $result[] = $prev;
+		    }
+		    else {
+		        $result[] = $start.':'.$prev;
+		    }
+		    
+		    // return as comma separated string
+		    $result = implode(',', $result);
+		    
+		    return preg_match('/[^0-9:,*]/', $result) ? 'INVALID' : $result;
+		}
+		
+		public static function uncompressMessageSet($_messages) {
+		    if (empty($_messages)) {
+		        return array();
+		    }
+		    
+		    $result   = array();
+		    $_messages = explode(',', $_messages);
+		    
+		    foreach ($_messages as $idx => $part) {
+		        $items = explode(':', $part);
+		        $max   = max($items[0], $items[1]);
+		        
+		        for ($x=$items[0]; $x<=$max; $x++) {
+		            $result[] = (int)$x;
+		        }
+		        unset($_messages[$idx]);
+		    }
+		    
+		    return $result;
 		}
 		
 	}

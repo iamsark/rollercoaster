@@ -576,7 +576,7 @@ if (!class_exists("RC_PhpImapReceiver")) {
 					$this->text_message .= trim($message_body);
 				} elseif (strtolower( $_structure->subtype) === 'html') {
 					if (isset($this->html_message)) {
-						$this->html_message .= '<br><br>';
+						$this->html_message .= '<style type="text/css"> body {margin: 0;}</style>';
 					} else {
 						$this->html_message = '';
 					}

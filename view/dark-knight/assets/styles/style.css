@@ -1134,6 +1134,10 @@ div.rc-mail-viewer-attachment-toggle:hover {
 	overflow: auto;
 }
 
+.rc-mail-viewer-content iframe body {
+	margin: 0px;
+}
+
 .rc-viewer-plain-text-body,
 .rc-composer-plain-text-body {
 	width: 100%;

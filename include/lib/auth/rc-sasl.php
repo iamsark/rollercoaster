@@ -43,7 +43,7 @@
 * @package Auth_SASL
 */
 
-class Auth_SASL
+class RC_Auth
 {
     /**
     * Factory class. Returns an object of the request
