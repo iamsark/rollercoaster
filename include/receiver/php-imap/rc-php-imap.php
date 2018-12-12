@@ -56,7 +56,7 @@ if (!class_exists("RC_PhpImapReceiver")) {
 		public function __construct() {
 			$this->name = "phpimap";
 			/* Inject this module to global RC */
-			RC()->inject("receiver", $this);
+			//RC()->inject("receiver", $this);
 		}
 		
 		/**
@@ -151,7 +151,7 @@ if (!class_exists("RC_PhpImapReceiver")) {
 		 * {@inheritDoc}
 		 * @see RC_Receiver::fetch_message_folders()
 		 */
-		public function fetch_message_folders() {
+		public function list_folders() {
 			/* Array container for holding list of RC_Folder instances */
 			$rc_folders = array();
 			/* Ok fetch the mail folders */
@@ -387,7 +387,7 @@ if (!class_exists("RC_PhpImapReceiver")) {
 		 * {@inheritDoc}
 		 * @see RC_Receiver::fetch_message_headers()
 		 */
-		public function fetch_message_headers($_start_index=0, $_end_index=0,$_sort) {
+		public function list_headers($_start_index=0, $_end_index=0,$_sort) {
 			$headers = array();
 			/* Construct the range string */
 			$range = $_start_index .":".$_end_index;

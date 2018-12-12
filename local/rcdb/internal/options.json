@@ -3,11 +3,58 @@
 		"user":"sark@sarkware.com",
 		"pass":"123456"	
 	},
+	"config" : {
+		"debug": 0,
+		"default_charset": "ISO-8859-1",
+		"log_date_format": "d-M-Y H:i:s O",
+		"smtp_log": 0,
+		"log_logins": 0,
+		"log_session": 0,		
+		"imap_default_port": 143,
+		"smtp_default_port": 143,
+		"imap_conn_options": null,
+		"imap_timeout": 0,
+		"imap_auth_cid": null,
+		"imap_auth_pw": null,
+		"imap_delimiter": null,
+		"imap_vendor": null,
+		"imap_ns_personal": null,
+		"imap_ns_other": null,
+		"imap_ns_shared": null,		
+		"imap_force_caps": 0,
+		"imap_force_lsub": 0,
+		"imap_force_ns": 0,
+		"imap_skip_hidden_folders": 0,
+		"imap_disabled_caps": [],
+		"smtp_auth_type": "",
+		"smtp_auth_cid": null,
+		"smtp_auth_pw": null,
+		"smtp_timeout": 0,
+		"smtp_conn_options": null,
+		"login_failed_attempt": 3,
+		"session_timeout": 10,
+		"des_key": "roller-coaster-!24ByteDESkey*Str",
+		"cipher_method": "DES-EDE3-CBC",
+		"password_charset": "ISO-8859-1",
+		"max_message_size": 100,
+		"max_recipients": 0,
+		"image_thumbnail_size": 240,
+		"contact_photo_size": 160,
+		"save_sent_messages": 1,
+		"drafts_mbox": "Drafts",
+		"junk_mbox": "Junk",
+		"sent_mbox": "Sent",
+		"trash_mbox": "Trash",
+		"refresh_interval" : 60,
+		"delete_always": 0,
+		"forward_attachment": 0,
+		"skip_deleted": 0
+	},
 	"modules": [ 
 		{ 
 			"name": "email",
 		 	"title": "Email",
-		 	"status": "yes",
+		 	"status": 1,
 		 	"desc": "",
 		 	"dependencies": [],
 			"options": {
@@ -20,7 +67,7 @@
 		{
 			"name": "contact",
 		 	"title": "Contact",
-		 	"status": "yes",
+		 	"status": 1,
 		 	"desc": "",
 		 	"dependencies": [],
 		 	"options": {}
@@ -28,18 +75,21 @@
 		{
 			"name": "calendar",
 		 	"title": "Calendar",
-		 	"status": "yes",
+		 	"status": 1,
 		 	"desc": "",
 		 	"dependencies": [],
 		 	"options": {}
 		}
 	],
-	"theme": {
-		"name": "Dark Knight",
-		"directory": "dark-knight",
-		"desc": "",
-		"dependencies": []
-	},
+	"themes": [
+		{
+			"name": "Dark Knight",
+			"directory": "dark-knight",
+			"desc": "",
+			"status": 1,
+			"dependencies": []
+		}
+	],
 	"info": {
 		"package": "rc",
 		"name": "Roller Coaster",

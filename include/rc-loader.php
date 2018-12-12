@@ -79,7 +79,9 @@ if (!class_exists("RC_Loader")) {
 		/* Maintain the prepared response object, any module that wants to send the response
 		 * it can write it on this property, like this "RC()->response"
 		 * which will be flushed out by the docker to client */
-		$response;	
+		$response,	
+		/* Rollercoaster configurations, loaded from '/local/rcdb/internal/options.json' */
+		$config;
 		
 		public function __construct() {}
 		
@@ -107,6 +109,9 @@ if (!class_exists("RC_Loader")) {
 			require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . "receiver" . DIRECTORY_SEPARATOR . "php-imap" . DIRECTORY_SEPARATOR . "rc-attachment.php";
 			require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . "receiver" . DIRECTORY_SEPARATOR . "php-imap" . DIRECTORY_SEPARATOR . "rc-php-imap.php";
 			
+			require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . "receiver" . DIRECTORY_SEPARATOR . "rc-socket" . DIRECTORY_SEPARATOR . "rc-socket.php";
+			require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . "receiver" . DIRECTORY_SEPARATOR . "rc-socket" . DIRECTORY_SEPARATOR . "rc-socket-imap.php";
+						
 			/* Load sender implementation */
 			require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . "sender" . DIRECTORY_SEPARATOR . "rc-sender.php";
 			require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . "sender" . DIRECTORY_SEPARATOR . "php-mailer" . DIRECTORY_SEPARATOR . "rc-php-mailer.php";
@@ -140,6 +145,9 @@ if (!class_exists("RC_Loader")) {
 				define( "RC_GOAHEAD", false );
 			}
 			
+			/* Load global configuration */
+			$this->load_config();
+			
 			/* Load plugin manager */
 			/* trigger the rc_plugins_loaded action */
 			$this->hook->trigger_action( "rc_plugins_loaded" );
@@ -162,6 +170,14 @@ if (!class_exists("RC_Loader")) {
 		 */
 		public function inject($_name, $_value) {
 			$this->{$_name} = $_value;
+		}
+		
+		private function load_config() {
+		    $this->config = array();
+		    $config = json_decode(file_get_contents(dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR ."local". DIRECTORY_SEPARATOR ."rcdb". DIRECTORY_SEPARATOR ."internal". DIRECTORY_SEPARATOR ."options.json"), true);
+		    if ($config && isset($config["config"])) {
+		        $this->config = $config["config"];
+		    }		    
 		}
 		
 	}

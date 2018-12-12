@@ -67,7 +67,7 @@ interface RC_Receiver {
 	 * 				returns false otherwise.				
 	 * 
 	 */
-	public function fetch_message_folders();
+	public function list_folders();
 	
 	/**
 	 * 
@@ -183,7 +183,7 @@ interface RC_Receiver {
 	 * 				Note you have to select the intended folder before try to fetching
 	 * 
 	 */
-	public function fetch_message_headers($_start_index=0, $_end_index=0, $_sort);
+	public function list_headers($_start_index=0, $_end_index=0, $_sort);
 	
 	/**
 	 * 

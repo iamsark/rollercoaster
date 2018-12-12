@@ -51,7 +51,7 @@ if (!class_exists("RC_Mailer")) {
 		public function get_message_folders() {
 			
 			if( RC()->receiver->connect() ) {
-				if($flist = RC()->receiver->fetch_message_folders()) {
+				if($flist = RC()->receiver->list_folders()) {
 					/* Trigger the filter for other modules to process the folder list before sending response */
 					$flist = RC()->hook->trigger_filter("rc_folder_list", $flist);
 					/* Prepare response */
@@ -110,7 +110,7 @@ if (!class_exists("RC_Mailer")) {
 						}
 					}
 						
-					$mails = RC()->receiver->fetch_message_headers($sindex, $eindex, $sort);
+					$mails = RC()->receiver->lilst_headers($sindex, $eindex, $sort);
 					if (is_array($mails)) {
 						$this->update_suggestion($mails);
 						$mails = RC()->hook->trigger_filter("rc_message_list", $mails);
@@ -144,6 +144,7 @@ if (!class_exists("RC_Mailer")) {
 		 * 
 		 */
 		public function get_message() {
+		    
 			$payload = RC()->request->get_payload();
 			if (isset($payload["folder"]) && isset($payload["uid"])) {
 				if (RC()->receiver->select_folder($payload["folder"])) {
@@ -167,6 +168,7 @@ if (!class_exists("RC_Mailer")) {
 			} else {
 				RC()->response = new RC_Response(false, "Required Param Missing.!", 0, -1, array());
 			}
+			
 		}
 		
 		/**
@@ -181,6 +183,7 @@ if (!class_exists("RC_Mailer")) {
 		 * 
 		 */
 		public function get_folders_meta() {
+		    
 			$is_ok = true;
 			$folders = array();
 			$payload = RC()->request->get_payload();			
@@ -210,7 +213,8 @@ if (!class_exists("RC_Mailer")) {
 					$folders[$folder["name"]] = $rc_folder;
 				}
 			}
-			RC()->response = new RC_Response(true, "Folders Meta", 0, count($folders), $folders);					
+			RC()->response = new RC_Response(true, "Folders Meta", 0, count($folders), $folders);	
+			
 		}
 		
 		/**
@@ -223,6 +227,7 @@ if (!class_exists("RC_Mailer")) {
 		 * 
 		 */
 		public function get_folder_meta() {
+		    
 			$payload = RC()->request->get_payload();
 			if ($payload["type"] == "folder") {
 				if (RC()->receiver->select_folder($payload["folder"])) {
@@ -252,6 +257,7 @@ if (!class_exists("RC_Mailer")) {
 				// Unlikely
 				RC()->response = new RC_Response(false, "Mandatory parameter missing", 0, -1,  array());
 			}
+			
 		}
 		
 		/**
@@ -268,6 +274,7 @@ if (!class_exists("RC_Mailer")) {
 		 * 
 		 */
 		public function get_attachments() {
+		    
 			$payload = RC()->request->get_payload();
 			if (isset($payload["folder"]) && isset($payload["uid"]) && isset($payload["msgno"])) {
 				$filename = isset($payload["file"]) ? $payload["file"] : "";
@@ -276,6 +283,7 @@ if (!class_exists("RC_Mailer")) {
 				// Unlikely
 				RC()->response = new RC_Response(false, "Mandatory parameter missing", 0, -1,  array());
 			}
+			
 		}
 		
 		/**
@@ -288,6 +296,7 @@ if (!class_exists("RC_Mailer")) {
 		 * 
 		 */
 		public function create_folder() {
+		    
 			$payload = RC()->request->get_payload();
 			if (isset($payload["name"])) {
 				if (RC()->receiver->add_folder($payload["name"])) {
@@ -299,6 +308,7 @@ if (!class_exists("RC_Mailer")) {
 				// Unlikely
 				RC()->response = new RC_Response(false, "Mandatory parameter missing", 0, 1,  array());
 			}
+			
 		}
 		
 		/**
@@ -312,6 +322,7 @@ if (!class_exists("RC_Mailer")) {
 		 *  
 		 */
 		public function rename_folder() {
+		    
 			$payload = RC()->request->get_payload();
 			if (isset($payload["old_name"]) && isset($payload["new_name"])) {
 				if (RC()->receiver->rename_folder($payload["old_name"], $payload["new_name"])) {
@@ -323,6 +334,7 @@ if (!class_exists("RC_Mailer")) {
 				// Unlikely
 				RC()->response = new RC_Response(false, "Mandatory parameter missing", 0, -1, array());
 			}
+			
 		}
 		
 		/**
@@ -335,6 +347,7 @@ if (!class_exists("RC_Mailer")) {
 		 * 
 		 */
 		public function delete_folder() {
+		    
 			$payload = RC()->request->get_payload();
 			if (isset($payload["name"])) {
 				if (RC()->receiver->remove_folder($payload["name"])) {
@@ -346,6 +359,7 @@ if (!class_exists("RC_Mailer")) {
 				// Unlikely
 				RC()->response = new RC_Response(false, "Mandatory parameter missing", 0, -1, array());
 			}
+			
 		}
 		
 		/**
@@ -358,6 +372,7 @@ if (!class_exists("RC_Mailer")) {
 		 * 
 		 */
 		public function delete_messages() {
+		    
 			$payload = RC()->request->get_payload();
 			if (isset($payload["folder"]) && isset($payload["uids"])) {
 				if (RC()->receiver->select_folder($payload["folder"])) {
@@ -372,6 +387,7 @@ if (!class_exists("RC_Mailer")) {
 			} else {
 				RC()->response = new RC_Response(false, "Mandatory param missing.!", 0, -1, array());
 			}
+			
 		}
 		
 		public function move_message() {
@@ -387,7 +403,8 @@ if (!class_exists("RC_Mailer")) {
 		 * 				@uids			List of uid
 		 * 
 		 */
-		public function move_messages() {   error_message("Got the request");
+		public function move_messages() {  
+		    
 			$payload = RC()->request->get_payload();
 			if (isset($payload["folder"]) && isset($payload["to"]) && isset($payload["uids"])) {
 				if (RC()->receiver->select_folder($payload["folder"])) {
@@ -402,6 +419,7 @@ if (!class_exists("RC_Mailer")) {
 			} else {
 				RC()->response = new RC_Response(false, "Mandatory param missing.!", 0, -1, array());
 			}
+			
 		}
 		
 		private function update_mail_status() {
@@ -466,6 +484,7 @@ if (!class_exists("RC_Mailer")) {
 				}
 			}		
 			RC()->po->update_rc_us_list($all_adr);
+			
 		}
 		
 	}

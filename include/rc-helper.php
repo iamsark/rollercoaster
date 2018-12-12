@@ -476,6 +476,160 @@ if (!class_exists("RC_Helper")) {
 		    return $result;
 		}
 		
+		public static function parse_socket_options(&$_options, $_host = null) {
+		    if (empty($_host) || empty($_options)) {
+		        return $_options;
+		    }
+		    
+		    // get rid of schema and port from the hostname
+		    $host_url = parse_url($_host);
+		    if (isset($host_url['host'])) {
+		        $_host = $host_url['host'];
+		    }
+		    
+		    // find per-host options
+		    if (array_key_exists($_host, $_options)) {
+		        $_options = $_options[$_host];
+		    }
+		}
+		
+		public static function clean_datestr($_date) {
+		    $m = array();
+		    $_date = trim($_date);
+		    
+		    // check for MS Outlook vCard date format YYYYMMDD
+		    if (preg_match('/^([12][90]\d\d)([01]\d)([0123]\d)$/', $_date, $m)) {
+		        return sprintf('%04d-%02d-%02d 00:00:00', intval($m[1]), intval($m[2]), intval($m[3]));
+		    }
+		    
+		    // Clean malformed data
+		    $_date = preg_replace(
+		        array(
+		            '/\(.*\)/',                                 // remove RFC comments
+		            '/GMT\s*([+-][0-9]+)/',                     // support non-standard "GMTXXXX" literal
+		            '/[^a-z0-9\x20\x09:\/\.+-]/i',              // remove any invalid characters
+		            '/\s*(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s*/i',   // remove weekday names
+		        ),
+		        array(
+		            '',
+		            '\\1',
+		            '',
+		            '',
+		        ), $_date);
+		    
+		    $_date = trim($_date);
+		    
+		    // try to fix dd/mm vs. mm/dd discrepancy, we can't do more here
+		    if (preg_match('/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})(\s.*)?$/', $_date, $m)) {
+		        $mdy   = $m[2] > 12 && $m[1] <= 12;
+		        $day   = $mdy ? $m[2] : $m[1];
+		        $month = $mdy ? $m[1] : $m[2];
+		        $_date  = sprintf('%04d-%02d-%02d%s', $m[3], $month, $day, $m[4] ?: ' 00:00:00');
+		    }
+		    // I've found that YYYY.MM.DD is recognized wrong, so here's a fix
+		    else if (preg_match('/^(\d{4})\.(\d{1,2})\.(\d{1,2})(\s.*)?$/', $_date, $m)) {
+		        $_date  = sprintf('%04d-%02d-%02d%s', $m[1], $m[2], $m[3], $m[4] ?: ' 00:00:00');
+		    }
+		    
+		    return $_date;
+		}
+		
+		/**
+		 * Encrypt a string
+		 *
+		 * @param string  $clear  Clear text input
+		 * @param string  $key    Encryption key to retrieve from the configuration, defaults to 'des_key'
+		 * @param boolean $base64 Whether or not to base64_encode() the result before returning
+		 *
+		 * @return string Encrypted text
+		 */
+		public function encrypt($clear, $key = 'des_key', $base64 = true) {
+		    if (!is_string($clear) || !strlen($clear)) {
+		        return '';
+		    }
+		    
+		    $ckey   = $this->config->get_crypto_key($key);
+		    $method = $this->config->get_crypto_method();
+		    $opts   = defined('OPENSSL_RAW_DATA') ? OPENSSL_RAW_DATA : true;
+		    $iv     = self::random_bytes(openssl_cipher_iv_length($method), true);
+		    $cipher = $iv . openssl_encrypt($clear, $method, $ckey, $opts, $iv);
+		    
+		    return $base64 ? base64_encode($cipher) : $cipher;
+		}
+		
+		/**
+		 * Decrypt a string
+		 *
+		 * @param string  $cipher Encrypted text
+		 * @param string  $key    Encryption key to retrieve from the configuration, defaults to 'des_key'
+		 * @param boolean $base64 Whether or not input is base64-encoded
+		 *
+		 * @return string Decrypted text
+		 */
+		public function decrypt($cipher, $key = 'des_key', $base64 = true) {
+		    if (!$cipher) {
+		        return '';
+		    }
+		    
+		    $cipher  = $base64 ? base64_decode($cipher) : $cipher;
+		    $ckey    = $this->config->get_crypto_key($key);
+		    $method  = $this->config->get_crypto_method();
+		    $opts    = defined('OPENSSL_RAW_DATA') ? OPENSSL_RAW_DATA : true;
+		    $iv_size = openssl_cipher_iv_length($method);
+		    $iv      = substr($cipher, 0, $iv_size);
+		    
+		    // session corruption? (#1485970)
+		    if (strlen($iv) < $iv_size) {
+		        return '';
+		    }
+		    
+		    $cipher = substr($cipher, $iv_size);
+		    $clear  = openssl_decrypt($cipher, $method, $ckey, $opts, $iv);
+		    
+		    return $clear;
+		}
+		
+		/**
+		 * Generate a random string
+		 *
+		 * @param int  $length String length
+		 * @param bool $raw    Return RAW data instead of ascii
+		 *
+		 * @return string The generated random string
+		 */
+		public static function random_bytes($length, $raw = false) {
+		    $hextab  = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+		    $tabsize = strlen($hextab);
+		    
+		    // Use PHP7 true random generator
+		    if ($raw && function_exists('random_bytes')) {
+		        return random_bytes($length);
+		    }
+		    
+		    if (!$raw && function_exists('random_int')) {
+		        $result = '';
+		        while ($length-- > 0) {
+		            $result .= $hextab[random_int(0, $tabsize - 1)];
+		        }
+		        
+		        return $result;
+		    }
+		    
+		    $random = openssl_random_pseudo_bytes($length);
+		    
+		    if ($random === false && $length > 0) {
+		        throw new Exception("Failed to get random bytes");
+		    }
+		    
+		    if (!$raw) {
+		        for ($x = 0; $x < $length; $x++) {
+		            $random[$x] = $hextab[ord($random[$x]) % $tabsize];
+		        }
+		    }
+		    
+		    return $random;
+		}
+		
 	}
 
 	new RC_Helper();
